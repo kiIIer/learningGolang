@@ -2,50 +2,19 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 )
-
-type triangle struct {
-	side1, side2 int
-}
-
-type circle struct {
-	radius int
-}
-
-type rectangle struct {
-	side1, side2 int
-}
-
-func (t triangle) tAreaCalculator() int {
-	a := t.side1 * t.side2 / 2
-	return a
-}
-
-func (c circle) cAreaCalculator() int {
-	p := math.Pi
-	cr := float64(c.radius)
-	af := cr * cr * p
-	a := int(af)
-	return a
-}
-
-func (r rectangle) rAreaCalculator() int {
-	a := r.side1 * r.side2
-	return a
-}
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	s := make([]interface{}, 0, 10)
 	fmt.Println(s)
 	for i := 0; i < 10; i++ {
-		seT := triangle{rand.Intn(10), rand.Intn(10)}
-		seC := circle{rand.Intn(10)}
-		seR := rectangle{rand.Intn(10), rand.Intn(10)}
-		rndn := rand.Intn(2)
+		seT := Triangle{float64(rand.Intn(10) + 1), float64(rand.Intn(10) + 1)}
+		seC := Circle{float64(rand.Intn(10) + 1)}
+		seR := Rectangle{float64(rand.Intn(10) + 1), float64(rand.Intn(10) + 1)}
+		rndn := rand.Intn(3)
 		switch {
 		case rndn == 0:
 			s = append(s, seT)
@@ -55,7 +24,24 @@ func main() {
 			s = append(s, seR)
 		}
 
-		fmt.Println(s)
 	}
+	fmt.Printf("%+v\n", s)
+	for i := 0; i < len(s); i++ {
+		ct := s[i]
+		t, okT := ct.(Triangle)
+		c, okC := ct.(Circle)
+		r, _ := ct.(Rectangle)
+		switch {
+		case okT:
+			a := t.calculateArea()
+			fmt.Printf("%+v area: %.2f\n", ct, a)
+		case okC:
+			a := c.calculateArea()
+			fmt.Printf("%+v area: %.2f\n", ct, a)
+		default:
+			a := r.calculateArea()
+			fmt.Printf("%+v area: %.2f\n", ct, a)
+		}
 
+	}
 }
