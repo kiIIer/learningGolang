@@ -53,8 +53,7 @@ func main() {
 
 	}
 	fmt.Printf("%+v\n", s)
-	for i := range s {
-		ct := s[i]
+	for _, ct := range s {
 		a := ct.calculateArea()
 		fmt.Printf("%+v area: %.2f\n", ct, a)
 
