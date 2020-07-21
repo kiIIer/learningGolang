@@ -37,10 +37,11 @@ func Crawl(url string, depth int, fetcher Fetcher, wg *sync.WaitGroup) {
 	// TODO: Don't fetch the same URL twice.
 	// This implementation doesn't do either:
 	defer wg.Done()
+
 	if depth <= 0 {
 		return
 	}
-	if vu.visitCheck(url) == true {
+	if vu.visitCheck(url) {
 		return
 	}
 	body, urls, err := fetcher.Fetch(url)
