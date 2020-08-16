@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type question struct {
@@ -15,7 +16,7 @@ type question struct {
 
 func main() {
 	nameOfFile := flag.String("file", "questions.csv", "Name of questions file")
-	// timeForAnswers := flag.Int("time", 30, "Time  given to answer")
+	timeForAnswers := flag.Int("time", 30, "Time  given to answer")
 	flag.Parse()
 
 	file, err := os.Open(*nameOfFile)
@@ -31,14 +32,36 @@ func main() {
 	questions := parseLines(lines)
 
 	score := 0
+	chr := make(chan bool)
+	cht := make(chan bool)
+	go timeOuter(*timeForAnswers, cht)
 	for i, p := range questions {
-		fmt.Printf("Solve #%d: %s = \n", i+1, p.q)
-		var answer string
-		fmt.Scanf("%s\n", &answer)
-		if answer == p.a {
-			score++
+		go ranger(i, p, &score, chr)
+		select {
+		case <-chr:
+			break
+		case <-cht:
+			exit(score)
+			return
 		}
 	}
+	exit(score)
+	return
+}
+
+func timeOuter(timeOut int, cht chan<- bool) {
+	time.Sleep(time.Duration(timeOut) * time.Second)
+	cht <- true
+}
+
+func ranger(i int, p question, score *int, chr chan<- bool) {
+	fmt.Printf("Solve #%d: %s = \n", i+1, p.q)
+	var answer string
+	fmt.Scanf("%s\n", &answer)
+	if answer == p.a {
+		*score++
+	}
+	chr <- true
 }
 
 func parseLines(lines [][]string) []question {
@@ -50,4 +73,11 @@ func parseLines(lines [][]string) []question {
 		}
 	}
 	return ret
+}
+
+func exit(score int) {
+	fmt.Printf("You scored %v out of 12 \n \n", score)
+	if score == 12 {
+		fmt.Println("Well done!")
+	}
 }
