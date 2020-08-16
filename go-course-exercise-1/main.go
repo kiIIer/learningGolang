@@ -81,7 +81,7 @@ func parseLines(lines [][]string) []question {
 
 func printScore(score, total int) {
 	fmt.Printf("You scored %v out of %v \n \n", score, total)
-	if score == 12 {
+	if score == total {
 		fmt.Println("Well done!")
 	}
 }
