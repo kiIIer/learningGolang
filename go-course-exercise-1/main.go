@@ -15,13 +15,14 @@ type question struct {
 }
 
 func main() {
-	nameOfFile := flag.String("file", "questions.csv", "Name of questions file")
-	timeForAnswers := flag.Int("time", 30, "Time  given to answer")
+	fileName := flag.String("file", "questions.csv", "Name of questions file")
+	timeoutSeconds := flag.Int("timeout", 30, "Timeout (seconds) for all answers")
 	flag.Parse()
 
-	file, err := os.Open(*nameOfFile)
+	file, err := os.Open(*fileName)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	reader := csv.NewReader(file)
 
@@ -32,36 +33,39 @@ func main() {
 	questions := parseLines(lines)
 
 	score := 0
-	chr := make(chan bool)
-	cht := make(chan bool)
-	go timeOuter(*timeForAnswers, cht)
-	for i, p := range questions {
-		go ranger(i, p, &score, chr)
+	timeout := newTimeout(*timeoutSeconds)
+
+quastionsLoop:
+	for i, q := range questions {
 		select {
-		case <-chr:
+		case answer := <-askUser(i+1, q.q):
+			if answer == q.a {
+				score++
+			}
 			break
-		case <-cht:
-			exit(score)
-			return
+		case <-timeout:
+			fmt.Printf("\ntimeout of %v seconds expired.\n", *timeoutSeconds)
+			break quastionsLoop
 		}
 	}
-	exit(score)
-	return
+
+	printScore(score, len(lines))
 }
 
-func timeOuter(timeOut int, cht chan<- bool) {
-	time.Sleep(time.Duration(timeOut) * time.Second)
-	cht <- true
+func newTimeout(timeoutSeconds int) <-chan time.Time {
+	return time.After(time.Duration(timeoutSeconds) * time.Second)
 }
 
-func ranger(i int, p question, score *int, chr chan<- bool) {
-	fmt.Printf("Solve #%d: %s = \n", i+1, p.q)
-	var answer string
-	fmt.Scanf("%s\n", &answer)
-	if answer == p.a {
-		*score++
-	}
-	chr <- true
+func askUser(questionNumber int, question string) <-chan string {
+	fmt.Printf("Solve #%d: %s = ", questionNumber, question)
+	answer := make(chan string)
+	go func() {
+		var text string
+		fmt.Scanf("%s\n", &text)
+		answer <- text
+		close(answer)
+	}()
+	return answer
 }
 
 func parseLines(lines [][]string) []question {
@@ -75,9 +79,9 @@ func parseLines(lines [][]string) []question {
 	return ret
 }
 
-func exit(score int) {
-	fmt.Printf("You scored %v out of 12 \n \n", score)
-	if score == 12 {
-		fmt.Println("Well done!")
+func printScore(score, total int) {
+	fmt.Printf("You scored %v out of %v \n \n", score, total)
+	if score == total {
+		fmt.Println("👍 Well done!")
 	}
 }
